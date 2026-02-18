@@ -43,8 +43,6 @@ You can copy `.env.example` to `.env` and set `GEMINI_API_KEY` there; load it wi
 
 *Demo showing `sortai test-demo` dry-run preview, then `--apply` with confirmation.*
 
-> **Note:** Create `docs/demo.gif` using ScreenToGif or similar tool. The GIF will automatically display on both GitHub and PyPI once uploaded.
-
 ## Usage
 
 | Command | Description |
@@ -170,3 +168,4 @@ The workflow triggers on tags matching `v*.*.*` (e.g., `v0.1.0`). You can also t
 ## License
 
 MIT
+
