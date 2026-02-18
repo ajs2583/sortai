@@ -39,10 +39,11 @@ You can copy `.env.example` to `.env` and set `GEMINI_API_KEY` there; load it wi
 
 ## Demo
 
-<!-- TODO: add demo GIF -->
-![Demo](docs/demo.gif)
+![Demo](https://raw.githubusercontent.com/ajs2583/sortai/main/docs/demo.gif)
 
-*(Placeholder: add a short GIF showing `sortai ./folder`, dry-run output, then `--apply` and confirmation.)*
+*Demo showing `sortai test-demo` dry-run preview, then `--apply` with confirmation.*
+
+> **Note:** Create `docs/demo.gif` using ScreenToGif or similar tool. The GIF will automatically display on both GitHub and PyPI once uploaded.
 
 ## Usage
 
