@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # If manually triggered, checkout the requested tag; otherwise use the pushed ref (tag).
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,7 +37,12 @@ jobs:
 
       - name: Verify version consistency
         run: |
-          VERSION_FROM_TAG="${GITHUB_REF#refs/tags/v}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            VERSION_FROM_TAG="${{ github.event.inputs.version }}"
+            VERSION_FROM_TAG="${VERSION_FROM_TAG#v}"
+          else
+            VERSION_FROM_TAG="${GITHUB_REF#refs/tags/v}"
+          fi
           VERSION_FROM_PYPROJECT=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           VERSION_FROM_INIT=$(python -c "import re; print(re.search(r\"__version__ = ['\\\"](.+?)['\\\"]\", open('sortai/__init__.py').read()).group(1))")
           
