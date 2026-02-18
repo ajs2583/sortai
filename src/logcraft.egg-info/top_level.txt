@@ -1,0 +1,2 @@
+gitlog_cli
+logcraft

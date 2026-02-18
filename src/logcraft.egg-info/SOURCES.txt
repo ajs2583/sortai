@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/logcraft/__init__.py
+src/logcraft/changelog.py
+src/logcraft/cli.py
+src/logcraft/git_utils.py
+src/logcraft.egg-info/PKG-INFO
+src/logcraft.egg-info/SOURCES.txt
+src/logcraft.egg-info/dependency_links.txt
+src/logcraft.egg-info/entry_points.txt
+src/logcraft.egg-info/requires.txt
+src/logcraft.egg-info/top_level.txt

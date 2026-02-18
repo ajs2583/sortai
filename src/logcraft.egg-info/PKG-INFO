@@ -1,0 +1,96 @@
+Metadata-Version: 2.4
+Name: logcraft
+Version: 0.1.0
+Summary: Craft CHANGELOG.md from git commit history with conventional-commit categorization
+Author-email: Your Name <you@example.com>
+License: MIT
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Version Control :: Git
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: gitpython>=3.1
+Requires-Dist: click>=8.0
+
+# Logcraft
+
+**Craft changelogs from git.** Logcraft turns your commit history into a formatted **CHANGELOG.md**, with commits automatically categorized by conventional commit prefixes.
+
+## Install
+
+```bash
+pip install logcraft
+```
+
+## Usage
+
+Run from the root of any git repository:
+
+```bash
+logcraft
+```
+
+This writes **CHANGELOG.md** in the current directory, grouping commits by category.
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--since TAG` | Only include commits since the given tag (e.g. `--since v1.0.0`). |
+| `--output FILE`, `-o FILE` | Output file path (default: `CHANGELOG.md`). |
+| `--dry-run` | Print the changelog to the terminal instead of writing a file. |
+| `--version` | Show the tool version and exit. |
+
+### Examples
+
+```bash
+# Generate CHANGELOG.md in the current directory
+logcraft
+
+# Changelog since a specific tag
+logcraft --since v1.0.0
+
+# Write to a custom file
+logcraft --output HISTORY.md
+logcraft -o docs/changelog.md
+
+# Preview without writing
+logcraft --dry-run
+
+# Show version
+logcraft --version
+```
+
+### Commit categories
+
+Commit messages are categorized by the first-line prefix (case-insensitive):
+
+| Prefix | Category |
+|--------|----------|
+| `feat:` | Features |
+| `fix:` | Bug Fixes |
+| `chore:` | Maintenance |
+| (anything else) | Other |
+
+Each changelog entry shows the commit subject, short hash, and date.
+
+## Development
+
+From the project root:
+
+```bash
+pip install -e .
+logcraft --help
+```
+
+## License
+
+MIT

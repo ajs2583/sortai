@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/gitlog_cli/__init__.py
+src/gitlog_cli/changelog.py
+src/gitlog_cli/cli.py
+src/gitlog_cli/git_utils.py
+src/gitlog_cli.egg-info/PKG-INFO
+src/gitlog_cli.egg-info/SOURCES.txt
+src/gitlog_cli.egg-info/dependency_links.txt
+src/gitlog_cli.egg-info/entry_points.txt
+src/gitlog_cli.egg-info/requires.txt
+src/gitlog_cli.egg-info/top_level.txt
