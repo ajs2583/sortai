@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # e.g. v0.1.0, v1.2.3
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write  # for PyPI publishing if enabled
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Verify version consistency
+        run: |
+          VERSION_FROM_TAG="${GITHUB_REF#refs/tags/v}"
+          VERSION_FROM_PYPROJECT=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          VERSION_FROM_INIT=$(python -c "import re; print(re.search(r\"__version__ = ['\\\"](.+?)['\\\"]\", open('sortai/__init__.py').read()).group(1))")
+          
+          echo "Tag version: $VERSION_FROM_TAG"
+          echo "pyproject.toml version: $VERSION_FROM_PYPROJECT"
+          echo "sortai/__init__.py version: $VERSION_FROM_INIT"
+          
+          if [ "$VERSION_FROM_TAG" != "$VERSION_FROM_PYPROJECT" ] || [ "$VERSION_FROM_TAG" != "$VERSION_FROM_INIT" ]; then
+            echo "Error: Version mismatch!"
+            exit 1
+          fi
+
+      - name: Run basic checks
+        run: |
+          # Check imports
+          python -c "import sortai; print(f'sortai {sortai.__version__}')"
+          python -m sortai.cli --version
+          python -m sortai.cli --help
+          
+          # Check CLI entry point exists
+          python -c "from sortai.cli import main; print('CLI entry point OK')"
+
+      - name: Build package
+        run: |
+          python -m build
+          ls -lh dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to PyPI (optional - uncomment and set secrets)
+        if: false  # Set to true and add PYPI_API_TOKEN secret to enable
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload dist/*
