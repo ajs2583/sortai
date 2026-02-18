@@ -5,7 +5,7 @@ LLM-powered directory organizer. Uses **Google Gemini** to suggest a folder stru
 - **Dry-run by default** – see exactly what would move where before touching anything.
 - **Confirm before apply** – with `--apply`, you are prompted to confirm before any files are moved.
 
-📦 **PyPI Package:** [https://pypi.org/project/sortai/0.1.0/](https://pypi.org/project/sortai/0.1.2/)
+📦 **PyPI Package:** [https://pypi.org/project/sortai/0.1.2/](https://pypi.org/project/sortai/0.1.2/)
 
 ## Install
 
@@ -168,5 +168,6 @@ The workflow triggers on tags matching `v*.*.*` (e.g., `v0.1.0`). You can also t
 ## License
 
 MIT
+
 
 
