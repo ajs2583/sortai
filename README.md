@@ -51,7 +51,7 @@ You can copy `.env.example` to `.env` and set `GEMINI_API_KEY` there; load it wi
 | `sortai <path>` | Dry-run: show what would be moved where (default). |
 | `sortai <path> --apply` | After dry-run, prompt and then actually move files. |
 | `sortai <path> --depth 2` | Organize up to 2 levels of subfolders (e.g. `documents/work`). |
-| `sortai <path> --model gemini-1.5-flash` | Override Gemini model (default: gemini-1.5-flash). |
+| `sortai <path> --model gemini-2.5-flash` | Override Gemini model (default: gemini-2.5-flash). |
 | `sortai --version` | Print version. |
 | `sortai --help` | Show help. |
 

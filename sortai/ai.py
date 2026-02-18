@@ -8,6 +8,26 @@ from typing import Any
 GEMINI_API_KEY_URL = "https://aistudio.google.com/app/apikey"
 
 
+def list_available_models() -> list[str]:
+    """List available Gemini models for the current API key."""
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key or not api_key.strip():
+        return []
+    
+    try:
+        from google import genai
+        client = genai.Client(api_key=api_key.strip())
+        models = client.models.list()
+        model_names = []
+        for m in models:
+            if hasattr(m, "name"):
+                name = m.name.split("/")[-1] if "/" in m.name else m.name
+                model_names.append(name)
+        return model_names
+    except Exception:
+        return []
+
+
 class MissingApiKeyError(Exception):
     """Raised when GEMINI_API_KEY is not set."""
 
@@ -20,7 +40,7 @@ class MissingApiKeyError(Exception):
 def get_moves(
     file_list: list[dict],
     depth: int,
-    model_name: str = "gemini-1.5-flash",
+    model_name: str = "gemini-2.5-flash",
 ) -> list[tuple[str, str]]:
     """
     Call Gemini to suggest folder structure. Returns list of (relative_path, target_folder).
@@ -31,14 +51,51 @@ def get_moves(
     if not api_key or not api_key.strip():
         raise MissingApiKeyError()
 
-    import google.generativeai as genai
-    genai.configure(api_key=api_key.strip())
-    model = genai.GenerativeModel(model_name)
-
+    try:
+        from google import genai
+    except ImportError:
+        raise ImportError(
+            "google-genai package not installed. Run: pip install google-genai"
+        )
+    
+    client = genai.Client(api_key=api_key.strip())
     prompt = _build_prompt(file_list, depth)
-    response = model.generate_content(prompt)
-    text = (response.text or "").strip()
-    return _parse_moves(text, file_list)
+    
+    # Try common model name variations
+    model_variations = [
+        model_name,
+        f"models/{model_name}",
+        f"publishers/google/models/{model_name}",
+    ]
+    
+    last_error = None
+    for model_variant in model_variations:
+        try:
+            response = client.models.generate_content(
+                model=model_variant,
+                contents=prompt,
+            )
+            text = (response.text or "").strip()
+            return _parse_moves(text, file_list)
+        except Exception as e:
+            last_error = e
+            if "404" not in str(e) and "not found" not in str(e).lower():
+                # Not a 404, re-raise immediately
+                raise
+    
+    # If all variations failed, try to list available models
+    if "404" in str(last_error) or "not found" in str(last_error).lower():
+        available = list_available_models()
+        if available:
+            raise ValueError(
+                f"Model '{model_name}' not found. Available models: {', '.join(available[:10])}"
+            )
+        else:
+            raise ValueError(
+                f"Model '{model_name}' not found. Common models: gemini-1.5-flash, gemini-1.5-pro, gemini-2.5-flash"
+            ) from last_error
+    raise last_error
+    
 
 
 def _build_prompt(file_list: list[dict], depth: int) -> str:

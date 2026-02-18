@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from sortai import __version__
-from sortai.ai import GEMINI_API_KEY_URL, MissingApiKeyError, get_moves
+from sortai.ai import GEMINI_API_KEY_URL, MissingApiKeyError, get_moves, list_available_models
 from sortai.organizer import apply_moves, confirm, dry_run
 from sortai.reader import list_files
 
@@ -33,8 +33,8 @@ from sortai.reader import list_files
 @click.option(
     "--model",
     type=str,
-    default="gemini-1.5-flash",
-    help="Gemini model name (default: gemini-1.5-flash).",
+    default="gemini-2.5-flash",
+    help="Gemini model name (default: gemini-2.5-flash).",
 )
 @click.option(
     "--version",
@@ -43,16 +43,37 @@ from sortai.reader import list_files
     default=False,
     help="Show version and exit.",
 )
+@click.option(
+    "--list-models",
+    is_flag=True,
+    default=False,
+    help="List available Gemini models and exit.",
+)
 def main(
     path: Path | None,
     apply: bool,
     depth: int,
     model: str,
     show_version: bool,
+    list_models: bool,
 ) -> None:
     """Organize files in a directory using Google Gemini."""
     if show_version:
         click.echo(f"sortai {__version__}")
+        raise SystemExit(0)
+    
+    if list_models:
+        if not (os.environ.get("GEMINI_API_KEY") or "").strip():
+            click.echo("Error: GEMINI_API_KEY is not set.", err=True)
+            click.echo(f"Get an API key at: {GEMINI_API_KEY_URL}", err=True)
+            raise SystemExit(1)
+        models = list_available_models()
+        if models:
+            click.echo("Available models:")
+            for m in models:
+                click.echo(f"  - {m}")
+        else:
+            click.echo("Could not list models. Check your API key.", err=True)
         raise SystemExit(0)
 
     if path is None:
