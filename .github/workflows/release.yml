@@ -24,6 +24,7 @@ jobs:
         with:
           # If manually triggered, checkout the requested tag; otherwise use the pushed ref (tag).
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref }}
+          fetch-depth: 0  # Fetch all tags
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,22 +39,54 @@ jobs:
       - name: Verify version consistency
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            VERSION_FROM_TAG="${{ github.event.inputs.version }}"
-            VERSION_FROM_TAG="${VERSION_FROM_TAG#v}"
+            INPUT_TAG="${{ github.event.inputs.version }}"
+            # Remove leading 'v' if present
+            VERSION_FROM_TAG="${INPUT_TAG#v}"
+            # Verify the tag exists
+            if ! git rev-parse "$INPUT_TAG" >/dev/null 2>&1; then
+              echo "Error: Tag '$INPUT_TAG' does not exist. Create and push the tag first:"
+              echo "  git tag $INPUT_TAG"
+              echo "  git push origin $INPUT_TAG"
+              exit 1
+            fi
           else
             VERSION_FROM_TAG="${GITHUB_REF#refs/tags/v}"
           fi
-          VERSION_FROM_PYPROJECT=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-          VERSION_FROM_INIT=$(python -c "import re; print(re.search(r\"__version__ = ['\\\"](.+?)['\\\"]\", open('sortai/__init__.py').read()).group(1))")
+          # Trim whitespace from all versions (remove leading/trailing whitespace)
+          VERSION_FROM_TAG=$(echo "$VERSION_FROM_TAG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           
-          echo "Tag version: $VERSION_FROM_TAG"
-          echo "pyproject.toml version: $VERSION_FROM_PYPROJECT"
-          echo "sortai/__init__.py version: $VERSION_FROM_INIT"
+          # Extract and trim pyproject.toml version
+          VERSION_FROM_PYPROJECT=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           
-          if [ "$VERSION_FROM_TAG" != "$VERSION_FROM_PYPROJECT" ] || [ "$VERSION_FROM_TAG" != "$VERSION_FROM_INIT" ]; then
+          # Extract and trim __init__.py version (using Python to handle quotes properly)
+          VERSION_FROM_INIT=$(python -c "import re; m = re.search(r\"__version__ = ['\\\"](.+?)['\\\"]\", open('sortai/__init__.py').read()); print(m.group(1).strip() if m else '')")
+          
+          echo "Tag version: '$VERSION_FROM_TAG'"
+          echo "pyproject.toml version: '$VERSION_FROM_PYPROJECT'"
+          echo "sortai/__init__.py version: '$VERSION_FROM_INIT'"
+          
+          # Compare versions explicitly
+          TAG_MATCHES_PYPROJECT=false
+          TAG_MATCHES_INIT=false
+          
+          if [ "$VERSION_FROM_TAG" = "$VERSION_FROM_PYPROJECT" ]; then
+            TAG_MATCHES_PYPROJECT=true
+          fi
+          
+          if [ "$VERSION_FROM_TAG" = "$VERSION_FROM_INIT" ]; then
+            TAG_MATCHES_INIT=true
+          fi
+          
+          if [ "$TAG_MATCHES_PYPROJECT" != "true" ] || [ "$TAG_MATCHES_INIT" != "true" ]; then
             echo "Error: Version mismatch!"
+            echo "Tag matches pyproject.toml: $TAG_MATCHES_PYPROJECT"
+            echo "Tag matches __init__.py: $TAG_MATCHES_INIT"
+            echo "Tag length: ${#VERSION_FROM_TAG}"
+            echo "pyproject.toml length: ${#VERSION_FROM_PYPROJECT}"
+            echo "__init__.py length: ${#VERSION_FROM_INIT}"
             exit 1
           fi
+          echo "✓ All versions match!"
 
       - name: Run basic checks
         run: |
