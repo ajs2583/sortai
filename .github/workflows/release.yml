@@ -41,20 +41,27 @@ jobs:
           pip install -e .
 
       - name: Verify version consistency
+        id: version-check
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             INPUT_TAG="${{ github.event.inputs.version }}"
-            # Remove leading 'v' if present
+            # Ensure tag starts with 'v'
+            if [[ ! "$INPUT_TAG" =~ ^v ]]; then
+              INPUT_TAG="v${INPUT_TAG}"
+            fi
+            TAG_NAME="$INPUT_TAG"
+            # Remove leading 'v' for version comparison
             VERSION_FROM_TAG="${INPUT_TAG#v}"
             # Verify the tag exists
-            if ! git rev-parse "$INPUT_TAG" >/dev/null 2>&1; then
-              echo "Error: Tag '$INPUT_TAG' does not exist. Create and push the tag first:"
-              echo "  git tag $INPUT_TAG"
-              echo "  git push origin $INPUT_TAG"
+            if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+              echo "Error: Tag '$TAG_NAME' does not exist. Create and push the tag first:"
+              echo "  git tag $TAG_NAME"
+              echo "  git push origin $TAG_NAME"
               exit 1
             fi
           else
-            VERSION_FROM_TAG="${GITHUB_REF#refs/tags/v}"
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            VERSION_FROM_TAG="${TAG_NAME#v}"
           fi
           # Trim whitespace from all versions (remove leading/trailing whitespace)
           VERSION_FROM_TAG=$(echo "$VERSION_FROM_TAG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
@@ -65,9 +72,13 @@ jobs:
           # Extract and trim __init__.py version (using Python to handle quotes properly)
           VERSION_FROM_INIT=$(python -c "import re; m = re.search(r\"__version__ = ['\\\"](.+?)['\\\"]\", open('sortai/__init__.py').read()); print(m.group(1).strip() if m else '')")
           
+          echo "Tag name: '$TAG_NAME'"
           echo "Tag version: '$VERSION_FROM_TAG'"
           echo "pyproject.toml version: '$VERSION_FROM_PYPROJECT'"
           echo "sortai/__init__.py version: '$VERSION_FROM_INIT'"
+          
+          # Save tag name for later steps
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           
           # Compare versions explicitly
           TAG_MATCHES_PYPROJECT=false
@@ -110,10 +121,11 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.version-check.outputs.tag_name }}
           files: dist/*
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(github.ref, '-') }}
+          prerelease: ${{ contains(steps.version-check.outputs.tag_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
