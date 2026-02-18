@@ -5,16 +5,22 @@ LLM-powered directory organizer. Uses **Google Gemini** to suggest a folder stru
 - **Dry-run by default** – see exactly what would move where before touching anything.
 - **Confirm before apply** – with `--apply`, you are prompted to confirm before any files are moved.
 
+📦 **PyPI Package:** [https://pypi.org/project/sortai/0.1.0/](https://pypi.org/project/sortai/0.1.0/)
+
 ## Install
+
+Install from PyPI:
 
 ```bash
 pip install sortai
 ```
 
+Or view the package on [PyPI](https://pypi.org/project/sortai/0.1.0/).
+
 Development install from source:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/sortai.git
+git clone https://github.com/ajs2583/sortai.git
 cd sortai
 pip install -e .
 ```
